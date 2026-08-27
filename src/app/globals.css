@@ -31,13 +31,15 @@
 
 :root {
   /* Dark-first identity: <html> always carries the "dark" class (see
-     layout.tsx) — there is no light-mode toggle in this app. */
+     layout.tsx) — there is no light-mode toggle in this app, so these
+     tokens live only here rather than being duplicated into a .dark block. */
   --background: oklch(0.16 0.05 290);
   --foreground: oklch(0.97 0.01 290);
   --card: oklch(1 0 0 / 8%);
   --card-foreground: var(--foreground);
   --popover: oklch(0.2 0.05 290);
   --popover-foreground: var(--foreground);
+  /* --primary intentionally isn't used as a flat bg-primary fill; primary actions use the --gradient-accent-start/--gradient-accent-end gradient instead (see button.tsx's "default" variant) — --primary/--primary-foreground exist to supply the accent hue for --ring and text-contrast purposes. */
   --primary: oklch(0.64 0.23 300);
   --primary-foreground: oklch(0.99 0.01 300);
   --secondary: oklch(1 0 0 / 10%);
@@ -56,27 +58,6 @@
   --gradient-bg-end: #24243e;
   --gradient-accent-start: #7c5cff;
   --gradient-accent-end: #ff6bd6;
-}
-
-.dark {
-  --background: oklch(0.16 0.05 290);
-  --foreground: oklch(0.97 0.01 290);
-  --card: oklch(1 0 0 / 8%);
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.2 0.05 290);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(0.64 0.23 300);
-  --primary-foreground: oklch(0.99 0.01 300);
-  --secondary: oklch(1 0 0 / 10%);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(1 0 0 / 6%);
-  --muted-foreground: oklch(0.82 0.02 290 / 70%);
-  --accent: oklch(1 0 0 / 12%);
-  --accent-foreground: var(--foreground);
-  --destructive: oklch(0.66 0.21 25);
-  --border: oklch(1 0 0 / 15%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.64 0.23 300);
 }
 
 @layer base {
