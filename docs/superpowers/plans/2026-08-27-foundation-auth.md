@@ -926,7 +926,7 @@ Run:
 ```bash
 npx vitest run src/lib/validation.test.ts
 ```
-Expected: PASS (6 tests).
+Expected: PASS (7 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -952,6 +952,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { loginSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -966,8 +967,13 @@ export function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      return;
+    }
     setLoading(true);
-    const { error } = await authClient.signIn.email({ email, password });
+    const { error } = await authClient.signIn.email(parsed.data);
     setLoading(false);
     if (error) {
       setError(error.message ?? "Não foi possível entrar.");
@@ -1066,6 +1072,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { signupSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1081,8 +1088,13 @@ export function SignupForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const parsed = signupSchema.safeParse({ name, email, password });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      return;
+    }
     setLoading(true);
-    const { error } = await authClient.signUp.email({ name, email, password });
+    const { error } = await authClient.signUp.email(parsed.data);
     setLoading(false);
     if (error) {
       setError(error.message ?? "Não foi possível criar a conta.");
@@ -1188,6 +1200,7 @@ git commit -m "feat: signup page"
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { forgotPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1201,9 +1214,14 @@ export function ForgotPasswordForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const parsed = forgotPasswordSchema.safeParse({ email });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      return;
+    }
     setLoading(true);
     const { error } = await authClient.requestPasswordReset({
-      email,
+      email: parsed.data.email,
       redirectTo: "/reset-password",
     });
     setLoading(false);
@@ -1293,6 +1311,7 @@ git commit -m "feat: forgot password page"
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { resetPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1312,9 +1331,14 @@ export function ResetPasswordForm() {
       setError("Link inválido ou expirado.");
       return;
     }
+    const parsed = resetPasswordSchema.safeParse({ password });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      return;
+    }
     setLoading(true);
     const { error } = await authClient.resetPassword({
-      newPassword: password,
+      newPassword: parsed.data.password,
       token,
     });
     setLoading(false);
@@ -1584,3 +1608,4 @@ Trigger a deploy (Vercel deploys automatically on push, or click "Deploy" in the
 - **Spec coverage:** this plan covers the spec's "Rotas" (public auth routes + placeholder `/boards`), "Fluxo de autenticação" (signup/login/forgot/reset), and the "Design visual" base tokens. It intentionally does **not** cover: trocar senha/email/foto in `/account` (needs the board's data model conventions decided first), the kanban board itself, or the real landing page — those are separate follow-up plans, as called out in "Context for the engineer" above and in "Fora de escopo" implicitly deferred items of the spec.
 - **Placeholder scan:** no TBDs; the two intentionally temporary files (`src/app/page.tsx`, `src/app/boards/page.tsx`) are explicitly labeled as placeholders to be replaced by later plans, not unfinished work within this plan.
 - **Type consistency:** `authClient.signIn.email`, `authClient.signUp.email`, `authClient.requestPasswordReset`, `authClient.resetPassword`, and `authClient.signOut` are Better Auth's standard React client methods and are used with the same signature everywhere they appear (Tasks 8–12). The `cn()` helper from Task 3 is imported identically (`@/lib/utils`) by every component that uses it.
+- **Amendment (post-Task-7 review):** a code quality reviewer correctly flagged that Task 7's zod schemas had no consumer as originally drafted — Tasks 8–11's forms only used native HTML5 `required`/`minLength` validation. Tasks 8–11 below were revised so each form's `handleSubmit` calls the matching schema's `.safeParse(...)` first and only proceeds to the `authClient` call on success, surfacing `parsed.error.issues[0]?.message` inline on failure. This was fixed in the plan before Tasks 8–11 were implemented, so there was no rework.
