@@ -785,11 +785,13 @@ export const authClient = createAuthClient();
 
 - [ ] **Step 4: Verify**
 
+`src/app/api/auth/[...all]/route.ts` now imports `src/lib/auth.ts`, which imports `@/db`, which throws at module-evaluation time if `DATABASE_URL` is unset. Next.js's build-time "Collecting page data" phase statically imports every route module — including this one — to inspect its config, even though the route itself is dynamic and never *executes* at build time. That import alone is enough to trigger the throw. So from this task onward, `npm run build` needs *some* syntactically valid `DATABASE_URL` in the environment — it does not need to be reachable, since nothing queries it at build time (the Neon HTTP driver only makes a network call when a query actually runs, which only happens at request time, never at build time).
+
 Run:
 ```bash
-npm run build
+DATABASE_URL="postgresql://user:pass@localhost:5432/placeholder" npm run build
 ```
-Expected: exit code 0.
+Expected: exit code 0. Do **not** put this placeholder value in any committed file (`.env.example` already documents the real shape) — it's a one-off shell env var for this build check only. Every later task's "Run `npm run build`" verification step also needs this same `DATABASE_URL=...` prefix, for the same reason — the whole app builds together, so once one route imports the DB, all build verification does. In real environments this is a non-issue: local dev has a real `DATABASE_URL` in `.env.local` from Task 13 onward, and Vercel production builds get a real one from the Neon integration (Task 14) — this placeholder is only needed for isolated build checks during development of Tasks 6–12, before a real database is connected.
 
 - [ ] **Step 5: Commit**
 
