@@ -8,7 +8,10 @@ export function SignOutButton() {
   const router = useRouter();
 
   async function handleSignOut() {
-    await authClient.signOut();
+    const { error } = await authClient.signOut();
+    if (error) {
+      return;
+    }
     router.push("/login");
     router.refresh();
   }
