@@ -52,7 +52,7 @@ sistema-kanban/
 │   │   ├── email.ts                  # Resend helpers
 │   │   ├── utils.ts                  # `cn()` class helper
 │   │   └── validation.ts             # Zod schemas for auth forms
-│   ├── middleware.ts                 # protects /boards and /account
+│   ├── proxy.ts                       # protects /boards and /account
 │   └── db/schema.ts (see above)
 ├── drizzle.config.ts
 ├── vitest.config.ts
@@ -1462,19 +1462,19 @@ git commit -m "feat: reset password page"
 ### Task 12: Route protection, sign out, and placeholder boards page
 
 **Files:**
-- Create: `src/middleware.ts`
+- Create: `src/proxy.ts`
 - Create: `src/components/auth/SignOutButton.tsx`
 - Create: `src/app/boards/page.tsx`
 
-- [ ] **Step 1: Create `src/middleware.ts`**
+- [ ] **Step 1: Create `src/proxy.ts`**
 
-Uses Better Auth's lightweight cookie check (no DB round-trip) to protect routes.
+Uses Better Auth's lightweight cookie check (no DB round-trip) to protect routes. Named `proxy.ts` with an exported `proxy` function, not `middleware.ts`/`middleware` — Next.js 16 renamed this file convention (the old `middleware.ts` name still works today but is deprecated; `node_modules/next/dist/docs/.../proxy.md` confirms the rename is behavior-identical, file and export name only).
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   if (!sessionCookie) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -1486,6 +1486,8 @@ export const config = {
   matcher: ["/boards/:path*", "/account/:path*"],
 };
 ```
+
+This is a cookie-presence check only — it does not verify against the database that the session is still valid (not expired, not revoked). That's an intentional, documented tradeoff for this kind of edge check (see Next's own proxy.md: *"Always verify authentication and authorization inside each Server Function rather than relying on Proxy alone"*). It's harmless today since the placeholder `/boards` page below does nothing with the session. Any future task that makes `/boards` or `/account` fetch real data must do its own DB-backed session check (e.g. `auth.api.getSession`) rather than assuming this file already proved the session is live.
 
 - [ ] **Step 2: Create `src/components/auth/SignOutButton.tsx`**
 
@@ -1500,7 +1502,10 @@ export function SignOutButton() {
   const router = useRouter();
 
   async function handleSignOut() {
-    await authClient.signOut();
+    const { error } = await authClient.signOut();
+    if (error) {
+      return;
+    }
     router.push("/login");
     router.refresh();
   }
