@@ -1212,6 +1212,7 @@ git commit -m "feat: signup page"
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
@@ -1247,10 +1248,24 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Se existir uma conta com esse email, enviamos um link para redefinir
-        a senha.
-      </p>
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          Se existir uma conta com esse email, enviamos um link para
+          redefinir a senha.
+        </p>
+        <div className="flex justify-between text-sm">
+          <button
+            type="button"
+            onClick={() => setSent(false)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Tentar outro email
+          </button>
+          <Link href="/login" className="text-foreground hover:underline">
+            Voltar para o login
+          </Link>
+        </div>
+      </div>
     );
   }
 
@@ -1275,6 +1290,12 @@ export function ForgotPasswordForm() {
       <Button type="submit" disabled={loading}>
         {loading ? "Enviando..." : "Enviar link de recuperação"}
       </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        Lembrou a senha?{" "}
+        <Link href="/login" className="text-foreground hover:underline">
+          Entrar
+        </Link>
+      </p>
     </form>
   );
 }
