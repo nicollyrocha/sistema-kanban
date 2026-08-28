@@ -40,7 +40,7 @@ export default async function BoardsPage() {
             className="glass flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm hover:bg-accent"
           >
             <span>{b.title}</span>
-            <span className="text-muted-foreground">→</span>
+            <span aria-hidden="true" className="text-muted-foreground">→</span>
           </Link>
         ))}
         {boards.length === 0 && (
