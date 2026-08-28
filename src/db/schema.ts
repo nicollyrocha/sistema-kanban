@@ -1,4 +1,14 @@
-import { pgTable, text, timestamp, boolean, index, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  integer,
+  uuid,
+  index,
+  unique,
+  primaryKey,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -64,4 +74,80 @@ export const verification = pgTable(
     updatedAt: timestamp("updated_at").defaultNow(),
   },
   (t) => [index("verification_identifier_idx").on(t.identifier)]
+);
+
+export const board = pgTable(
+  "board",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("board_user_id_idx").on(t.userId)]
+);
+
+// Named "board_column" (not "column") because COLUMN is a reserved SQL
+// keyword — Drizzle would quote it correctly either way, but avoiding
+// reserved words in identifiers sidesteps any tooling/raw-SQL surprises.
+export const boardColumn = pgTable(
+  "board_column",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    boardId: uuid("board_id")
+      .notNull()
+      .references(() => board.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("board_column_board_id_idx").on(t.boardId)]
+);
+
+export const card = pgTable(
+  "card",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    columnId: uuid("column_id")
+      .notNull()
+      .references(() => boardColumn.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    dueDate: timestamp("due_date"),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("card_column_id_idx").on(t.columnId)]
+);
+
+// label/cardLabel have no UI in this plan (that's a follow-up plan) — added
+// now so the schema migration for the whole board feature happens once.
+export const label = pgTable(
+  "label",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    boardId: uuid("board_id")
+      .notNull()
+      .references(() => board.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
+  },
+  (t) => [index("label_board_id_idx").on(t.boardId)]
+);
+
+export const cardLabel = pgTable(
+  "card_label",
+  {
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => card.id, { onDelete: "cascade" }),
+    labelId: uuid("label_id")
+      .notNull()
+      .references(() => label.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.cardId, t.labelId] })]
 );
