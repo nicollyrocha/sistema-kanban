@@ -14,11 +14,19 @@ export function ProfileForm({
   initialName: string;
   initialEmail: string;
 }) {
+  // "Committed" baseline — what the server actually has right now. Starts
+  // from props but advances after each successful save, so re-submitting
+  // unchanged values (or clicking Salvar twice without editing) doesn't
+  // keep re-sending the same update.
+  const [savedName, setSavedName] = useState(initialName);
+  const [savedEmail, setSavedEmail] = useState(initialEmail);
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const unchanged = name === savedName && email === savedEmail;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,25 +41,36 @@ export function ProfileForm({
 
     setLoading(true);
     try {
-      if (parsed.data.name !== initialName) {
+      let nameUpdated = false;
+
+      if (parsed.data.name !== savedName) {
         const { error: nameError } = await authClient.updateUser({ name: parsed.data.name });
         if (nameError) {
           setError(nameError.message ?? "Não foi possível atualizar o nome.");
           return;
         }
+        setSavedName(parsed.data.name);
+        nameUpdated = true;
       }
 
-      if (parsed.data.email !== initialEmail) {
+      if (parsed.data.email !== savedEmail) {
         const { error: emailError } = await authClient.changeEmail({
           newEmail: parsed.data.email,
           callbackURL: "/account",
         });
         if (emailError) {
-          setError(emailError.message ?? "Não foi possível trocar o email.");
+          // The name change above may already have succeeded even though
+          // the email change failed — say so, don't just show a bare error
+          // that makes it look like nothing happened.
+          setError(
+            nameUpdated
+              ? `Nome atualizado. Não foi possível trocar o email: ${emailError.message ?? "tente novamente."}`
+              : (emailError.message ?? "Não foi possível trocar o email.")
+          );
           return;
         }
         setMessage("Enviamos um link de confirmação para o novo email.");
-      } else {
+      } else if (nameUpdated) {
         setMessage("Perfil atualizado.");
       }
     } finally {
@@ -88,8 +107,12 @@ export function ProfileForm({
           {error}
         </p>
       )}
-      {message && <p className="text-sm text-muted-foreground">{message}</p>}
-      <Button type="submit" disabled={loading}>
+      {message && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {message}
+        </p>
+      )}
+      <Button type="submit" disabled={loading || unchanged}>
         {loading ? "Salvando..." : "Salvar"}
       </Button>
     </form>
