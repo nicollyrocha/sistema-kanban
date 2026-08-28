@@ -21,7 +21,7 @@ export function CardItem({ boardId, card }: { boardId: string; card: CardData })
         />
         {card.dueDate && (
           <span className="text-xs text-muted-foreground">
-            📅 {new Date(card.dueDate).toLocaleDateString("pt-BR")}
+            <span aria-hidden="true">📅</span> {card.dueDate.toLocaleDateString("pt-BR")}
           </span>
         )}
       </div>
