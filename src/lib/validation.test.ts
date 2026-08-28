@@ -4,6 +4,8 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  updateProfileSchema,
+  changePasswordSchema,
 } from "./validation";
 
 describe("signupSchema", () => {
@@ -63,6 +65,58 @@ describe("forgotPasswordSchema", () => {
 describe("resetPasswordSchema", () => {
   it("rejects a password shorter than 8 characters", () => {
     const result = resetPasswordSchema.safeParse({ password: "short" });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("updateProfileSchema", () => {
+  it("accepts a valid profile payload", () => {
+    const result = updateProfileSchema.safeParse({
+      name: "Ana",
+      email: "ana@example.com",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty name", () => {
+    const result = updateProfileSchema.safeParse({
+      name: "",
+      email: "ana@example.com",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an invalid email", () => {
+    const result = updateProfileSchema.safeParse({
+      name: "Ana",
+      email: "not-an-email",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("changePasswordSchema", () => {
+  it("accepts a valid password-change payload", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "oldpassword",
+      newPassword: "newpassword123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty current password", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "",
+      newPassword: "newpassword123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a new password shorter than 8 characters", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "oldpassword",
+      newPassword: "short",
+    });
     expect(result.success).toBe(false);
   });
 });
