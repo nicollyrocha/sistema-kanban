@@ -457,6 +457,11 @@ export function ProfileForm({
           );
           return;
         }
+        // The account's real email doesn't change until the confirmation
+        // link is clicked, but we still advance the baseline here — the
+        // request itself succeeded, and re-submitting the same pending
+        // address should not silently resend the confirmation email.
+        setSavedEmail(parsed.data.email);
         setMessage("Enviamos um link de confirmação para o novo email.");
       } else if (nameUpdated) {
         setMessage("Perfil atualizado.");
