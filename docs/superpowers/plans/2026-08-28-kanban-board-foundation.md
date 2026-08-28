@@ -409,6 +409,7 @@ export async function deleteBoard(boardId: string): Promise<{ error?: string }> 
 
   await db.delete(board).where(eq(board.id, boardId));
   revalidatePath("/boards");
+  revalidatePath(`/boards/${boardId}`);
   return {};
 }
 
