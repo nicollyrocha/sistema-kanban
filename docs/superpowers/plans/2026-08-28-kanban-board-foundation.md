@@ -1039,7 +1039,7 @@ export default async function BoardPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Meus quadros
+            <span aria-hidden="true">←</span> Meus quadros
           </Link>
           <InlineEditableText
             value={owned.title}
