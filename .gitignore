@@ -26,3 +26,6 @@ next-env.d.ts
 
 # brainstorming companion
 .superpowers/
+
+# local dev-server launch config
+.claude/
