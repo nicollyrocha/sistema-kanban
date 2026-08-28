@@ -1607,7 +1607,7 @@ Sign out, visit `/forgot-password`, submit your email. Since `RESEND_API_KEY` is
 
 - [ ] **Step 7: Manually verify route protection**
 
-Sign out, then try to visit `http://localhost:3000/boards` directly. Expected: redirected to `/login` (middleware blocks unauthenticated access).
+Sign out, then try to visit `http://localhost:3000/boards` directly. Expected: redirected to `/login` (`src/proxy.ts` blocks unauthenticated access).
 
 ---
 
