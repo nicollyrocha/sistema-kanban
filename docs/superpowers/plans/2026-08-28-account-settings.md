@@ -610,7 +610,11 @@ export function ChangePasswordForm() {
           {error}
         </p>
       )}
-      {message && <p className="text-sm text-muted-foreground">{message}</p>}
+      {message && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {message}
+        </p>
+      )}
       <Button type="submit" disabled={loading}>
         {loading ? "Salvando..." : "Salvar"}
       </Button>
