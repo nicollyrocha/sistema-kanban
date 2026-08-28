@@ -54,6 +54,7 @@ export function InlineCreateForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-1">
       <Input
         autoFocus
+        aria-label={placeholder}
         placeholder={placeholder}
         value={title}
         onChange={(e) => setTitle(e.target.value)}

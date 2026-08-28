@@ -6,10 +6,12 @@ import { cn } from "@/lib/utils";
 export function InlineEditableText({
   value,
   onSave,
+  label,
   className,
 }: {
   value: string;
   onSave: (newValue: string) => Promise<{ error?: string }>;
+  label: string;
   className?: string;
 }) {
   const [editing, setEditing] = useState(false);
@@ -49,6 +51,7 @@ export function InlineEditableText({
       <div className="flex flex-col gap-1">
         <input
           autoFocus
+          aria-label={label}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
