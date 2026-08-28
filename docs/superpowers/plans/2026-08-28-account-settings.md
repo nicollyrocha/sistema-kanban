@@ -313,7 +313,8 @@ export function AvatarUploader({
         return;
       }
       setImage(blob.url);
-    } catch {
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
       setError("Não foi possível enviar a imagem.");
     } finally {
       setUploading(false);
@@ -328,6 +329,7 @@ export function AvatarUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
+        aria-label="Trocar foto de perfil"
         className="relative h-20 w-20 overflow-hidden rounded-full border border-border disabled:opacity-50"
       >
         {image ? (
@@ -342,6 +344,7 @@ export function AvatarUploader({
         ref={inputRef}
         type="file"
         accept="image/*"
+        aria-label="Selecionar imagem"
         className="hidden"
         onChange={handleFileChange}
       />
