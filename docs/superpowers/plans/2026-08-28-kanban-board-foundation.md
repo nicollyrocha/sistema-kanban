@@ -554,10 +554,12 @@ import { cn } from "@/lib/utils";
 export function InlineEditableText({
   value,
   onSave,
+  label,
   className,
 }: {
   value: string;
   onSave: (newValue: string) => Promise<{ error?: string }>;
+  label: string;
   className?: string;
 }) {
   const [editing, setEditing] = useState(false);
@@ -597,6 +599,7 @@ export function InlineEditableText({
       <div className="flex flex-col gap-1">
         <input
           autoFocus
+          aria-label={label}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
@@ -695,6 +698,7 @@ export function InlineCreateForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-1">
       <Input
         autoFocus
+        aria-label={placeholder}
         placeholder={placeholder}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -906,7 +910,11 @@ export function CardItem({ boardId, card }: { boardId: string; card: CardData })
   return (
     <div className="glass flex items-start justify-between gap-2 rounded-lg border border-border bg-card p-2 text-sm">
       <div className="flex flex-col gap-1">
-        <InlineEditableText value={card.title} onSave={renameCard.bind(null, boardId, card.id)} />
+        <InlineEditableText
+          value={card.title}
+          onSave={renameCard.bind(null, boardId, card.id)}
+          label="Título do card"
+        />
         {card.dueDate && (
           <span className="text-xs text-muted-foreground">
             📅 {new Date(card.dueDate).toLocaleDateString("pt-BR")}
@@ -950,6 +958,7 @@ export function Column({
         <InlineEditableText
           value={column.title}
           onSave={renameColumn.bind(null, boardId, column.id)}
+          label="Nome da coluna"
           className="text-sm font-semibold"
         />
         <DeleteButton
@@ -1035,6 +1044,7 @@ export default async function BoardPage({
           <InlineEditableText
             value={owned.title}
             onSave={renameBoard.bind(null, boardId)}
+            label="Nome do quadro"
             className="text-xl font-semibold"
           />
         </div>
