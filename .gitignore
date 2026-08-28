@@ -29,3 +29,6 @@ next-env.d.ts
 
 # local dev-server launch config
 .claude/
+
+.vercel
+.env*
