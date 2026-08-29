@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { board, boardColumn, card, label, cardLabel } from "@/db/schema";
 import { getOwnedBoard, getOwnedColumn, getOwnedCard, getOwnedLabel } from "@/lib/board-auth";
 import { nextPosition } from "@/lib/position";
+import { reorderColumn } from "@/lib/reorder";
 import { titleSchema, descriptionSchema, dueDateSchema, labelSchema } from "@/lib/validation";
 
 async function requireUserId() {
@@ -286,6 +287,53 @@ export async function deleteLabel(boardId: string, labelId: string): Promise<{ e
   if (!owned) return { error: "Etiqueta não encontrada." };
 
   await db.delete(label).where(eq(label.id, labelId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function moveCard(
+  boardId: string,
+  cardId: string,
+  targetColumnId: string,
+  newIndex: number
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  const ownedColumn = await getOwnedColumn(boardId, targetColumnId, userId);
+  if (!ownedColumn) return { error: "Coluna não encontrada." };
+
+  const existing = await db
+    .select({ id: card.id })
+    .from(card)
+    .where(eq(card.columnId, targetColumnId))
+    .orderBy(card.position);
+
+  const newOrder = reorderColumn(
+    existing.map((c) => c.id),
+    cardId,
+    newIndex
+  );
+
+  const updates = newOrder.map((id, index) =>
+    id === cardId
+      ? db
+          .update(card)
+          .set({ columnId: targetColumnId, position: index, updatedAt: new Date() })
+          .where(eq(card.id, id))
+      : db.update(card).set({ position: index }).where(eq(card.id, id))
+  );
+
+  // newOrder always contains at least cardId (reorderColumn always inserts
+  // it), so `updates` always has at least one element -- db.batch's type
+  // requires a non-empty tuple, hence the cast. If the installed drizzle-orm
+  // version rejects this cast, adjust it to match the actual db.batch
+  // signature rather than switching to a loop of individual awaits (that
+  // would give up the atomicity this is here for).
+  await db.batch(updates as [(typeof updates)[number], ...(typeof updates)[number][]]);
+
   revalidatePath(`/boards/${boardId}`);
   return {};
 }
