@@ -454,15 +454,29 @@ export function CardDetailPanel({
   const [creatingLabel, setCreatingLabel] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Move focus into the panel on open (it was opened via click or Enter/Space
-  // on the card, so nothing inside the panel has focus yet), and let Escape
-  // close it — the conventional dismiss key for a dialog. This doesn't trap
-  // Tab inside the panel (no full focus trap), so a keyboard user can still
-  // Tab past it into the board behind the overlay; a complete trap would need
-  // either manual first/last-focusable cycling or the native <dialog>
-  // element, both out of scope for this pass.
+  // Move focus into the panel once, when it first mounts (it was opened via
+  // click or Enter/Space on the card, so nothing inside the panel has focus
+  // yet). Deliberately `[]`, not `[onClose]` — `onClose` is an inline arrow
+  // function from the caller (`() => setDetailOpen(false)`), a fresh
+  // reference on every parent re-render, and this panel re-renders on every
+  // label/description/due-date save (each one revalidates the board and
+  // flows new props down). Depending on `onClose` here would re-run
+  // `.focus()` on every such save, yanking focus back to the close button
+  // out from under whatever field the user is actively editing.
   useEffect(() => {
     closeButtonRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only, see comment above
+  }, []);
+
+  // Let Escape close the panel — the conventional dismiss key for a dialog.
+  // This doesn't trap Tab inside the panel (no full focus trap), so a
+  // keyboard user can still Tab past it into the board behind the overlay;
+  // a complete trap would need either manual first/last-focusable cycling
+  // or the native <dialog> element, both out of scope for this pass.
+  // Unlike the focus effect above, re-registering this listener whenever
+  // `onClose` changes identity is harmless — it just keeps the handler's
+  // closure current, with no visible side effect.
+  useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
