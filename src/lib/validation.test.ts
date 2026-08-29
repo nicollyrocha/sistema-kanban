@@ -7,6 +7,9 @@ import {
   updateProfileSchema,
   changePasswordSchema,
   titleSchema,
+  descriptionSchema,
+  dueDateSchema,
+  labelSchema,
 } from "./validation";
 
 describe("signupSchema", () => {
@@ -140,6 +143,57 @@ describe("titleSchema", () => {
 
   it("rejects a title longer than 200 characters", () => {
     const result = titleSchema.safeParse({ title: "a".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("descriptionSchema", () => {
+  it("accepts an empty description", () => {
+    const result = descriptionSchema.safeParse({ description: "" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a normal description", () => {
+    const result = descriptionSchema.safeParse({ description: "Ligar antes de assinar." });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a description longer than 2000 characters", () => {
+    const result = descriptionSchema.safeParse({ description: "a".repeat(2001) });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("dueDateSchema", () => {
+  it("accepts a valid ISO date string", () => {
+    const result = dueDateSchema.safeParse({ dueDate: "2026-08-28" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null", () => {
+    const result = dueDateSchema.safeParse({ dueDate: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a malformed date string", () => {
+    const result = dueDateSchema.safeParse({ dueDate: "not-a-date" });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("labelSchema", () => {
+  it("accepts a valid label", () => {
+    const result = labelSchema.safeParse({ name: "urgente", color: "#ff6bd6" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty name", () => {
+    const result = labelSchema.safeParse({ name: "", color: "#ff6bd6" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a color outside the fixed palette", () => {
+    const result = labelSchema.safeParse({ name: "urgente", color: "#000000" });
     expect(result.success).toBe(false);
   });
 });
