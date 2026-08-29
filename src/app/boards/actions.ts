@@ -9,7 +9,13 @@ import { board, boardColumn, card, label, cardLabel } from "@/db/schema";
 import { getOwnedBoard, getOwnedColumn, getOwnedCard, getOwnedLabel } from "@/lib/board-auth";
 import { nextPosition } from "@/lib/position";
 import { reorderColumn } from "@/lib/reorder";
-import { titleSchema, descriptionSchema, dueDateSchema, labelSchema } from "@/lib/validation";
+import {
+  titleSchema,
+  descriptionSchema,
+  dueDateSchema,
+  labelSchema,
+  moveCardSchema,
+} from "@/lib/validation";
 
 async function requireUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -299,6 +305,11 @@ export async function moveCard(
 ): Promise<{ error?: string }> {
   const userId = await requireUserId();
 
+  const parsed = moveCardSchema.safeParse({ newIndex });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Posição inválida." };
+  }
+
   const owned = await getOwnedCard(boardId, cardId, userId);
   if (!owned) return { error: "Card não encontrado." };
 
@@ -314,7 +325,7 @@ export async function moveCard(
   const newOrder = reorderColumn(
     existing.map((c) => c.id),
     cardId,
-    newIndex
+    parsed.data.newIndex
   );
 
   const updates = newOrder.map((id, index) =>

@@ -47,6 +47,10 @@ export const labelSchema = z.object({
   color: z.enum(LABEL_COLORS, { error: "Cor inválida" }),
 });
 
+export const moveCardSchema = z.object({
+  newIndex: z.number().int("Posição inválida").min(0, "Posição inválida"),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
@@ -57,3 +61,4 @@ export type TitleInput = z.infer<typeof titleSchema>;
 export type DescriptionInput = z.infer<typeof descriptionSchema>;
 export type DueDateInput = z.infer<typeof dueDateSchema>;
 export type LabelInput = z.infer<typeof labelSchema>;
+export type MoveCardInput = z.infer<typeof moveCardSchema>;
