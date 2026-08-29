@@ -29,4 +29,8 @@ describe("reorderColumn", () => {
   it("clamps a negative index to the start", () => {
     expect(reorderColumn(["a", "b"], "c", -5)).toEqual(["c", "a", "b"]);
   });
+
+  it("returns an equivalent order when dropped back at its current index", () => {
+    expect(reorderColumn(["a", "b", "c"], "b", 1)).toEqual(["a", "b", "c"]);
+  });
 });

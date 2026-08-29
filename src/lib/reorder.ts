@@ -1,3 +1,5 @@
+// `newIndex` is the position the card ends up at in the *returned* array
+// (after it's removed from wherever it was), not an index into `cardIds`.
 export function reorderColumn(
   cardIds: string[],
   movedCardId: string,
