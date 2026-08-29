@@ -4,17 +4,8 @@ import { InlineEditableText } from "./InlineEditableText";
 import { InlineCreateForm } from "./InlineCreateForm";
 import { DeleteButton } from "./DeleteButton";
 import { CardItem } from "./CardItem";
+import type { CardData, ColumnData, LabelData } from "@/lib/board-types";
 import { renameColumn, deleteColumn, createCard } from "@/app/boards/actions";
-
-type LabelData = { id: string; name: string; color: string };
-type ColumnData = { id: string; title: string };
-type CardData = {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date | null;
-  labels: LabelData[];
-};
 
 export function Column({
   boardId,

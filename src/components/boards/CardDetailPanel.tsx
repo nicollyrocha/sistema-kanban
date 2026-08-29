@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { InlineEditableText } from "./InlineEditableText";
 import { DeleteButton } from "./DeleteButton";
 import { LABEL_COLORS, LABEL_COLOR_NAMES } from "@/lib/label-colors";
+import type { CardData, LabelData } from "@/lib/board-types";
 import {
   renameCard,
   deleteCard,
@@ -14,15 +15,6 @@ import {
   unassignLabel,
   deleteLabel,
 } from "@/app/boards/actions";
-
-type LabelData = { id: string; name: string; color: string };
-type CardData = {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date | null;
-  labels: LabelData[];
-};
 
 function toDateInputValue(date: Date | null) {
   if (!date) return "";
