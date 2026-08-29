@@ -4,7 +4,7 @@ import Link from "next/link";
 import { eq, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { boardColumn, card } from "@/db/schema";
+import { boardColumn, card, label, cardLabel } from "@/db/schema";
 import { getOwnedBoard } from "@/lib/board-auth";
 import { InlineEditableText } from "@/components/boards/InlineEditableText";
 import { InlineCreateForm } from "@/components/boards/InlineCreateForm";
@@ -47,6 +47,28 @@ export default async function BoardPage({
         .orderBy(card.position)
     : [];
 
+  const boardLabels = await db.select().from(label).where(eq(label.boardId, boardId));
+
+  const cardLabelRows = cards.length
+    ? await db
+        .select({ cardId: cardLabel.cardId, id: label.id, name: label.name, color: label.color })
+        .from(cardLabel)
+        .innerJoin(label, eq(cardLabel.labelId, label.id))
+        .where(
+          inArray(
+            cardLabel.cardId,
+            cards.map((c) => c.id)
+          )
+        )
+    : [];
+
+  const cardsWithLabels = cards.map((c) => ({
+    ...c,
+    labels: cardLabelRows
+      .filter((cl) => cl.cardId === c.id)
+      .map((cl) => ({ id: cl.id, name: cl.name, color: cl.color })),
+  }));
+
   return (
     <main className="flex min-h-screen flex-col gap-6 px-4 py-6">
       <div className="flex items-center justify-between">
@@ -73,7 +95,8 @@ export default async function BoardPage({
             key={column.id}
             boardId={boardId}
             column={column}
-            cards={cards.filter((c) => c.columnId === column.id)}
+            cards={cardsWithLabels.filter((c) => c.columnId === column.id)}
+            boardLabels={boardLabels}
           />
         ))}
         <div className="w-64 shrink-0">
