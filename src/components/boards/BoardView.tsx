@@ -223,6 +223,14 @@ export function BoardView({
 
   return (
     <DndContext
+      // dnd-kit generates the hidden "described by" element's id from a
+      // module-level counter unless given an explicit `id` here. That
+      // counter resets per server request but keeps climbing across
+      // client-side navigations within the same browser session, so
+      // without a stable id every navigation past the first logs a
+      // hydration mismatch. boardId is stable across server and client and
+      // unique per board, so it's a natural fit.
+      id={`board-${boardId}`}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
