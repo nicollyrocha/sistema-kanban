@@ -39,6 +39,21 @@ export function BoardView({
   boardLabels: LabelData[];
 }) {
   const [columns, setColumns] = useState(cardsByColumn);
+  // `cardsByColumn` is a fresh object every time the server re-renders this
+  // page (e.g. after any Server Action's revalidatePath -- creating a card,
+  // renaming a column, etc.), but `columns` is local state seeded from it
+  // only once at mount, so those updates would otherwise never reach the
+  // screen without a full reload. This is React's documented pattern for
+  // resetting state when a prop changes ("adjusting state during render"),
+  // not a useEffect, so it applies before the stale UI ever paints. It's
+  // safe mid-drag too: `cardsByColumn`'s reference only changes after a
+  // Server Action's promise resolves, and by then handleDragEnd has already
+  // cleared the drag -- no revalidation can land while a drag is in flight.
+  const [prevCardsByColumn, setPrevCardsByColumn] = useState(cardsByColumn);
+  if (cardsByColumn !== prevCardsByColumn) {
+    setPrevCardsByColumn(cardsByColumn);
+    setColumns(cardsByColumn);
+  }
   const [activeCard, setActiveCard] = useState<CardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshotRef = useRef<Record<string, CardData[]> | null>(null);
