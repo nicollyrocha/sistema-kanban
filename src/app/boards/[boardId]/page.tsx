@@ -7,10 +7,9 @@ import { db } from "@/db";
 import { boardColumn, card, label, cardLabel } from "@/db/schema";
 import { getOwnedBoard } from "@/lib/board-auth";
 import { InlineEditableText } from "@/components/boards/InlineEditableText";
-import { InlineCreateForm } from "@/components/boards/InlineCreateForm";
 import { DeleteButton } from "@/components/boards/DeleteButton";
-import { Column } from "@/components/boards/Column";
-import { renameBoard, deleteBoard, createColumn } from "../actions";
+import { BoardView } from "@/components/boards/BoardView";
+import { renameBoard, deleteBoard } from "../actions";
 
 export default async function BoardPage({
   params,
@@ -89,24 +88,17 @@ export default async function BoardPage({
           onDelete={deleteBoard.bind(null, boardId)}
         />
       </div>
-      <div className="flex flex-1 gap-4 overflow-x-auto pb-4">
-        {columns.map((column) => (
-          <Column
-            key={column.id}
-            boardId={boardId}
-            column={column}
-            cards={cardsWithLabels.filter((c) => c.columnId === column.id)}
-            boardLabels={boardLabels}
-          />
-        ))}
-        <div className="w-64 shrink-0">
-          <InlineCreateForm
-            placeholder="Nome da coluna"
-            buttonLabel="+ Adicionar coluna"
-            onCreate={createColumn.bind(null, boardId)}
-          />
-        </div>
-      </div>
+      <BoardView
+        boardId={boardId}
+        columns={columns}
+        cardsByColumn={Object.fromEntries(
+          columns.map((column) => [
+            column.id,
+            cardsWithLabels.filter((c) => c.columnId === column.id),
+          ])
+        )}
+        boardLabels={boardLabels}
+      />
     </main>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { DeleteButton } from "./DeleteButton";
 import { CardDetailPanel } from "./CardDetailPanel";
 import type { CardData, LabelData } from "@/lib/board-types";
@@ -16,6 +18,23 @@ export function CardItem({
   boardLabels: LabelData[];
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+  });
+  // dnd-kit's keyboard listener uses Space to pick up/drop a focused
+  // draggable -- that collides with this card's previous Enter/Space
+  // shortcut to open the detail panel. Space stays reserved for the drag
+  // gesture (matches dnd-kit's own documented keyboard pattern); Enter alone
+  // opens the panel now. Mouse/touch clicks are unaffected -- dnd-kit's
+  // PointerSensor only intercepts a click once the pointer has moved past
+  // its activation distance, so a plain click still opens the panel.
+  const { onKeyDown: dragKeyDown, ...pointerListeners } = listeners ?? {};
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
 
   // Render the panel INSTEAD OF the closed card face, not alongside it.
   // Rendering both (closed card behind, panel on top via a fixed overlay)
@@ -37,13 +56,18 @@ export function CardItem({
   return (
     // A native <button> can't contain another interactive element (the
     // delete button below), so this is a div with role="button" plus
-    // manual Enter/Space handling, not a shortcut around semantics.
+    // manual Enter handling, not a shortcut around semantics.
     <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...pointerListeners}
       role="button"
       tabIndex={0}
       onClick={() => setDetailOpen(true)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        dragKeyDown?.(e);
+        if (e.key === "Enter") {
           e.preventDefault();
           setDetailOpen(true);
         }

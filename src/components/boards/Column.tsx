@@ -1,5 +1,7 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { InlineEditableText } from "./InlineEditableText";
 import { InlineCreateForm } from "./InlineCreateForm";
 import { DeleteButton } from "./DeleteButton";
@@ -18,6 +20,8 @@ export function Column({
   cards: CardData[];
   boardLabels: LabelData[];
 }) {
+  const { setNodeRef } = useDroppable({ id: column.id });
+
   return (
     <div className="flex w-64 shrink-0 flex-col gap-3 rounded-xl border border-border bg-white/5 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -33,11 +37,13 @@ export function Column({
           onDelete={deleteColumn.bind(null, boardId, column.id)}
         />
       </div>
-      <div className="flex flex-col gap-2">
-        {cards.map((c) => (
-          <CardItem key={c.id} boardId={boardId} card={c} boardLabels={boardLabels} />
-        ))}
-      </div>
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div ref={setNodeRef} className="flex min-h-8 flex-col gap-2">
+          {cards.map((c) => (
+            <CardItem key={c.id} boardId={boardId} card={c} boardLabels={boardLabels} />
+          ))}
+        </div>
+      </SortableContext>
       <InlineCreateForm
         placeholder="Título do card"
         buttonLabel="+ Adicionar card"
