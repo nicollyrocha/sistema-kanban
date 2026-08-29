@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { InlineEditableText } from "./InlineEditableText";
 import { DeleteButton } from "./DeleteButton";
-import { LABEL_COLORS } from "@/lib/label-colors";
+import { LABEL_COLORS, LABEL_COLOR_NAMES } from "@/lib/label-colors";
 import {
   renameCard,
   deleteCard,
@@ -48,6 +48,23 @@ export function CardDetailPanel({
   const [labelColor, setLabelColor] = useState<string>(LABEL_COLORS[0]);
   const [labelError, setLabelError] = useState<string | null>(null);
   const [creatingLabel, setCreatingLabel] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus into the panel on open (it was opened via click or Enter/Space
+  // on the card, so nothing inside the panel has focus yet), and let Escape
+  // close it — the conventional dismiss key for a dialog. This doesn't trap
+  // Tab inside the panel (no full focus trap), so a keyboard user can still
+  // Tab past it into the board behind the overlay; a complete trap would need
+  // either manual first/last-focusable cycling or the native <dialog>
+  // element, both out of scope for this pass.
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   async function handleDescriptionBlur() {
     if (description === (card.description ?? "")) return;
@@ -136,7 +153,12 @@ export function CardDetailPanel({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="glass relative z-10 flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-card p-4 sm:max-w-md sm:rounded-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalhes do card ${card.title}`}
+        className="glass relative z-10 flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-card p-4 sm:max-w-md sm:rounded-2xl"
+      >
         <div className="flex items-start justify-between gap-2">
           <InlineEditableText
             value={card.title}
@@ -145,6 +167,7 @@ export function CardDetailPanel({
             className="text-lg font-semibold"
           />
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Fechar"
@@ -212,7 +235,7 @@ export function CardDetailPanel({
                 <button
                   key={c}
                   type="button"
-                  aria-label={`Cor ${c}`}
+                  aria-label={`Cor ${LABEL_COLOR_NAMES[c]}`}
                   aria-pressed={labelColor === c}
                   onClick={() => setLabelColor(c)}
                   className={`h-4 w-4 rounded-full ${
