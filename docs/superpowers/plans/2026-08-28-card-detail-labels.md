@@ -298,12 +298,23 @@ export async function createLabel(
   const owned = await getOwnedCard(boardId, cardId, userId);
   if (!owned) return { error: "Card não encontrado." };
 
-  const [newLabel] = await db
-    .insert(label)
-    .values({ boardId, name: parsed.data.name, color: parsed.data.color })
-    .returning({ id: label.id });
-
-  await db.insert(cardLabel).values({ cardId, labelId: newLabel.id });
+  // `drizzle-orm/neon-http`'s db.transaction() throws unconditionally --
+  // this driver is stateless HTTP, no session to hold a transaction open
+  // across two round trips. db.batch(...) is the primitive it does support
+  // (Neon's HTTP batch/transaction endpoint), so the label's id is
+  // generated here instead of relying on .returning() after a first insert
+  // -- that's what makes it possible to build both inserts up front and
+  // send them as one atomic batch.
+  const labelId = crypto.randomUUID();
+  await db.batch([
+    db.insert(label).values({
+      id: labelId,
+      boardId,
+      name: parsed.data.name,
+      color: parsed.data.color,
+    }),
+    db.insert(cardLabel).values({ cardId, labelId }),
+  ]);
   revalidatePath(`/boards/${boardId}`);
   return {};
 }
