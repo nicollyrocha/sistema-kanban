@@ -149,7 +149,7 @@ export const dueDateSchema = z.object({
 
 export const labelSchema = z.object({
   name: z.string().trim().min(1, "Informe um nome").max(50, "Nome muito longo"),
-  color: z.enum(LABEL_COLORS, { message: "Cor inválida" }),
+  color: z.enum(LABEL_COLORS, { error: "Cor inválida" }),
 });
 
 export type DescriptionInput = z.infer<typeof descriptionSchema>;
