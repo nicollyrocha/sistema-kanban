@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
+  KeyboardCode,
   KeyboardSensor,
   PointerSensor,
   closestCorners,
@@ -42,11 +43,25 @@ export function BoardView({
   const [error, setError] = useState<string | null>(null);
   const snapshotRef = useRef<Record<string, CardData[]> | null>(null);
   const dragStartRef = useRef<{ columnId: string; index: number } | null>(null);
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+      keyboardCodes: {
+        start: [KeyboardCode.Space],
+        cancel: [KeyboardCode.Esc],
+        end: [KeyboardCode.Space],
+      },
+    })
   );
+
+  function showError(message: string) {
+    setError(message);
+    if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    errorTimeoutRef.current = setTimeout(() => setError(null), 4000);
+  }
 
   function handleDragStart(event: DragStartEvent) {
     const cardId = String(event.active.id);
@@ -81,10 +96,11 @@ export function BoardView({
 
       if (sourceColumnId === targetColumnId) {
         const overIndex = sourceCards.findIndex((c) => c.id === overId);
-        if (overIndex === -1 || overIndex === activeIndex) return prev;
+        const insertAt = overIndex >= 0 ? overIndex : sourceCards.length - 1;
+        if (insertAt === activeIndex) return prev;
         const reordered = [...sourceCards];
         const [moved] = reordered.splice(activeIndex, 1);
-        reordered.splice(overIndex, 0, moved);
+        reordered.splice(insertAt, 0, moved);
         return { ...prev, [sourceColumnId]: reordered };
       }
 
@@ -114,6 +130,7 @@ export function BoardView({
     snapshotRef.current = null;
     dragStartRef.current = null;
     if (!snapshot || !start) return;
+    const dragStart = start;
 
     const activeId = String(active.id);
     const targetColumnId = findColumnId(columns, activeId);
@@ -129,22 +146,46 @@ export function BoardView({
 
     // Nothing actually moved (e.g. picked up and dropped back in place) --
     // skip the round trip.
-    if (start.columnId === targetColumnId && start.index === finalIndex) {
+    if (dragStart.columnId === targetColumnId && dragStart.index === finalIndex) {
       return;
+    }
+
+    // On failure, revert only this card back to where it started, rather than
+    // restoring the whole pre-drag snapshot -- a second drag can finish (and
+    // persist to the database) while this one's request is still in flight,
+    // and a full-snapshot revert would silently undo that other, already-
+    // successful move in the UI. This only touches the two columns involved
+    // in *this* card's move, leaving any other concurrent change intact.
+    function revertToStart() {
+      setColumns((prev) => {
+        const currentColumnId = findColumnId(prev, activeId);
+        if (!currentColumnId) return prev;
+        const movedCard = prev[currentColumnId].find((c) => c.id === activeId);
+        if (!movedCard) return prev;
+        const withoutCard = prev[currentColumnId].filter((c) => c.id !== activeId);
+        const origColumnCards =
+          currentColumnId === dragStart.columnId ? withoutCard : (prev[dragStart.columnId] ?? []);
+        const insertAt = Math.min(dragStart.index, origColumnCards.length);
+        const restoredOrigColumn = [...origColumnCards];
+        restoredOrigColumn.splice(insertAt, 0, movedCard);
+        return {
+          ...prev,
+          [currentColumnId]: withoutCard,
+          [dragStart.columnId]: restoredOrigColumn,
+        };
+      });
     }
 
     try {
       const result = await moveCard(boardId, activeId, targetColumnId, finalIndex);
       if (result.error) {
-        setError(result.error);
-        setColumns(snapshot);
-        setTimeout(() => setError(null), 4000);
+        showError(result.error);
+        revertToStart();
       }
     } catch (err) {
       console.error("Failed to move card:", err);
-      setError("Não foi possível mover o card.");
-      setColumns(snapshot);
-      setTimeout(() => setError(null), 4000);
+      showError("Não foi possível mover o card.");
+      revertToStart();
     }
   }
 
