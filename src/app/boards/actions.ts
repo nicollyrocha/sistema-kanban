@@ -2,13 +2,13 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { board, boardColumn, card } from "@/db/schema";
-import { getOwnedBoard, getOwnedColumn, getOwnedCard } from "@/lib/board-auth";
+import { board, boardColumn, card, label, cardLabel } from "@/db/schema";
+import { getOwnedBoard, getOwnedColumn, getOwnedCard, getOwnedLabel } from "@/lib/board-auth";
 import { nextPosition } from "@/lib/position";
-import { titleSchema } from "@/lib/validation";
+import { titleSchema, descriptionSchema, dueDateSchema, labelSchema } from "@/lib/validation";
 
 async function requireUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -160,6 +160,121 @@ export async function deleteCard(boardId: string, cardId: string): Promise<{ err
   if (!owned) return { error: "Card não encontrado." };
 
   await db.delete(card).where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function updateCardDescription(
+  boardId: string,
+  cardId: string,
+  description: string
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = descriptionSchema.safeParse({ description });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Descrição inválida." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .update(card)
+    .set({ description: parsed.data.description || null, updatedAt: new Date() })
+    .where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function updateCardDueDate(
+  boardId: string,
+  cardId: string,
+  dueDate: string | null
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = dueDateSchema.safeParse({ dueDate });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Data inválida." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .update(card)
+    .set({
+      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function createLabel(
+  boardId: string,
+  cardId: string,
+  name: string,
+  color: string
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = labelSchema.safeParse({ name, color });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Etiqueta inválida." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  const [newLabel] = await db
+    .insert(label)
+    .values({ boardId, name: parsed.data.name, color: parsed.data.color })
+    .returning({ id: label.id });
+
+  await db.insert(cardLabel).values({ cardId, labelId: newLabel.id });
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function assignLabel(
+  boardId: string,
+  cardId: string,
+  labelId: string
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  const ownedLabel = await getOwnedLabel(boardId, labelId, userId);
+  if (!ownedLabel) return { error: "Etiqueta não encontrada." };
+
+  await db.insert(cardLabel).values({ cardId, labelId }).onConflictDoNothing();
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function unassignLabel(
+  boardId: string,
+  cardId: string,
+  labelId: string
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .delete(cardLabel)
+    .where(and(eq(cardLabel.cardId, cardId), eq(cardLabel.labelId, labelId)));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function deleteLabel(boardId: string, labelId: string): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const owned = await getOwnedLabel(boardId, labelId, userId);
+  if (!owned) return { error: "Etiqueta não encontrada." };
+
+  await db.delete(label).where(eq(label.id, labelId));
   revalidatePath(`/boards/${boardId}`);
   return {};
 }

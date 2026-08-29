@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { board, boardColumn, card } from "@/db/schema";
+import { board, boardColumn, card, label } from "@/db/schema";
 
 export async function getOwnedBoard(boardId: string, userId: string) {
   const [row] = await db
@@ -35,4 +35,13 @@ export async function getOwnedCard(boardId: string, cardId: string, userId: stri
       and(eq(card.id, cardId), eq(boardColumn.boardId, boardId), eq(board.userId, userId))
     );
   return row?.card ?? null;
+}
+
+export async function getOwnedLabel(boardId: string, labelId: string, userId: string) {
+  const [row] = await db
+    .select({ label })
+    .from(label)
+    .innerJoin(board, eq(label.boardId, board.id))
+    .where(and(eq(label.id, labelId), eq(label.boardId, boardId), eq(board.userId, userId)));
+  return row?.label ?? null;
 }
