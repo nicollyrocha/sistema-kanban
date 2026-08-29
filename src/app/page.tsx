@@ -91,7 +91,10 @@ export default function HomePage() {
       </section>
 
       <section className="px-4 py-8 sm:px-8">
-        <div className="mx-auto flex max-w-4xl gap-4 overflow-x-auto pb-2">
+        <div
+          aria-hidden="true"
+          className="mx-auto flex max-w-4xl gap-4 overflow-x-auto pb-2"
+        >
           {PREVIEW_COLUMNS.map((column) => (
             <div
               key={column.title}
@@ -139,7 +142,7 @@ export default function HomePage() {
                 >
                   {feature.emoji}
                 </span>
-                <span className="font-semibold">{feature.title}</span>
+                <h3 className="font-semibold">{feature.title}</h3>
                 <span className="text-sm text-muted-foreground">
                   {feature.description}
                 </span>
@@ -149,7 +152,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="mt-auto flex items-center justify-center gap-2 border-t border-border px-4 py-6 text-sm text-muted-foreground">
+      <footer className="mt-auto flex flex-col items-center justify-center gap-1 border-t border-border px-4 py-6 text-center text-sm text-muted-foreground sm:flex-row sm:gap-2">
         <span>Kanban — feito pra organizar sua rotina.</span>
         <Link
           href="/login"
