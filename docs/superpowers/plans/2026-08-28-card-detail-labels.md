@@ -408,6 +408,7 @@ import { useEffect, useRef, useState } from "react";
 import { InlineEditableText } from "./InlineEditableText";
 import { DeleteButton } from "./DeleteButton";
 import { LABEL_COLORS, LABEL_COLOR_NAMES } from "@/lib/label-colors";
+import type { CardData, LabelData } from "@/lib/board-types";
 import {
   renameCard,
   deleteCard,
@@ -418,15 +419,6 @@ import {
   unassignLabel,
   deleteLabel,
 } from "@/app/boards/actions";
-
-type LabelData = { id: string; name: string; color: string };
-type CardData = {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date | null;
-  labels: LabelData[];
-};
 
 function toDateInputValue(date: Date | null) {
   if (!date) return "";
@@ -758,9 +750,35 @@ git commit -m "feat: card detail panel component"
 ### Task 4: Wire the panel into the board
 
 **Files:**
+- Create: `src/lib/board-types.ts`
+- Modify: `src/components/boards/CardDetailPanel.tsx` (Task 3's file — was declaring `LabelData`/`CardData` locally; now imports them)
 - Modify: `src/components/boards/CardItem.tsx`
 - Modify: `src/components/boards/Column.tsx`
 - Modify: `src/app/boards/[boardId]/page.tsx`
+
+- [ ] **Step 0: Create `src/lib/board-types.ts`**
+
+`LabelData`/`CardData`/`ColumnData` were declared identically, by hand, in three separate component files (`CardDetailPanel.tsx`, `CardItem.tsx`, `Column.tsx`) — harmless at one or two copies, but by three it's a real drift risk (a field added to one and forgotten in the others would only surface as a confusing type error somewhere unrelated, or worse, a silent `any`-shaped mismatch). One shared module, imported everywhere:
+
+```ts
+export type LabelData = { id: string; name: string; color: string };
+export type ColumnData = { id: string; title: string };
+export type CardData = {
+  id: string;
+  title: string;
+  description: string | null;
+  dueDate: Date | null;
+  labels: LabelData[];
+};
+```
+
+- [ ] **Step 0b: Update `src/components/boards/CardDetailPanel.tsx`**
+
+Replace its local `type LabelData = ...` / `type CardData = ...` declarations with:
+```ts
+import type { CardData, LabelData } from "@/lib/board-types";
+```
+placed alongside the file's other imports (nothing else in this file changes — same props, same handlers, same JSX).
 
 - [ ] **Step 1: Replace `src/components/boards/CardItem.tsx`**
 
@@ -770,16 +788,8 @@ git commit -m "feat: card detail panel component"
 import { useState } from "react";
 import { DeleteButton } from "./DeleteButton";
 import { CardDetailPanel } from "./CardDetailPanel";
+import type { CardData, LabelData } from "@/lib/board-types";
 import { deleteCard } from "@/app/boards/actions";
-
-type LabelData = { id: string; name: string; color: string };
-type CardData = {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date | null;
-  labels: LabelData[];
-};
 
 export function CardItem({
   boardId,
@@ -792,57 +802,64 @@ export function CardItem({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Render the panel INSTEAD OF the closed card face, not alongside it.
+  // Rendering both (closed card behind, panel on top via a fixed overlay)
+  // looks fine visually, but leaves the closed card's role="button" div
+  // mounted, focusable, and screen-reader-visible underneath — a keyboard
+  // user tabbing out of the panel lands on an element that's invisible
+  // under the backdrop. Swapping the whole return removes that trap.
+  if (detailOpen) {
+    return (
+      <CardDetailPanel
+        boardId={boardId}
+        card={card}
+        boardLabels={boardLabels}
+        onClose={() => setDetailOpen(false)}
+      />
+    );
+  }
+
   return (
-    <>
-      {/* A native <button> can't contain another interactive element (the
-          delete button below), so this is a div with role="button" plus
-          manual Enter/Space handling, not a shortcut around semantics. */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setDetailOpen(true)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setDetailOpen(true);
-          }
-        }}
-        className="glass flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-2 text-left text-sm"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <span>{card.title}</span>
-          <span onClick={(e) => e.stopPropagation()}>
-            <DeleteButton label="Excluir card" onDelete={deleteCard.bind(null, boardId, card.id)} />
-          </span>
-        </div>
-        {card.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {card.labels.map((l) => (
-              <span
-                key={l.id}
-                className="rounded px-1.5 py-0.5 text-xs text-black/80"
-                style={{ backgroundColor: l.color }}
-              >
-                {l.name}
-              </span>
-            ))}
-          </div>
-        )}
-        {card.dueDate && (
-          <span className="text-xs text-muted-foreground">
-            <span aria-hidden="true">📅</span> {card.dueDate.toLocaleDateString("pt-BR")}
-          </span>
-        )}
+    // A native <button> can't contain another interactive element (the
+    // delete button below), so this is a div with role="button" plus
+    // manual Enter/Space handling, not a shortcut around semantics.
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => setDetailOpen(true)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setDetailOpen(true);
+        }
+      }}
+      className="glass flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-2 text-left text-sm"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span>{card.title}</span>
+        <span onClick={(e) => e.stopPropagation()}>
+          <DeleteButton label="Excluir card" onDelete={deleteCard.bind(null, boardId, card.id)} />
+        </span>
       </div>
-      {detailOpen && (
-        <CardDetailPanel
-          boardId={boardId}
-          card={card}
-          boardLabels={boardLabels}
-          onClose={() => setDetailOpen(false)}
-        />
+      {card.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {card.labels.map((l) => (
+            <span
+              key={l.id}
+              className="rounded px-1.5 py-0.5 text-xs text-black/80"
+              style={{ backgroundColor: l.color }}
+            >
+              {l.name}
+            </span>
+          ))}
+        </div>
       )}
-    </>
+      {card.dueDate && (
+        <span className="text-xs text-muted-foreground">
+          <span aria-hidden="true">📅</span> {card.dueDate.toLocaleDateString("pt-BR")}
+        </span>
+      )}
+    </div>
   );
 }
 ```
@@ -857,17 +874,8 @@ import { InlineEditableText } from "./InlineEditableText";
 import { InlineCreateForm } from "./InlineCreateForm";
 import { DeleteButton } from "./DeleteButton";
 import { CardItem } from "./CardItem";
+import type { CardData, ColumnData, LabelData } from "@/lib/board-types";
 import { renameColumn, deleteColumn, createCard } from "@/app/boards/actions";
-
-type LabelData = { id: string; name: string; color: string };
-type ColumnData = { id: string; title: string };
-type CardData = {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date | null;
-  labels: LabelData[];
-};
 
 export function Column({
   boardId,
@@ -1016,4 +1024,4 @@ Sign in as a different user, confirm they cannot see or affect the first user's 
 
 - **Spec coverage:** every section of `docs/superpowers/specs/2026-08-28-card-detail-labels-design.md` maps to a task — interação (click-opens-panel, title moves inside) → Task 4, painel (tudo visível, campos) → Task 3, etiquetas (criar/aplicar/remover/excluir) → Tasks 2–3, paleta fixa → Task 1, Server Actions → Task 2.
 - **Placeholder scan:** no TBDs. The one place a value can't be pinned down until implementation time — the exact zod API for date-string validation — is explicitly flagged as "verify against the installed version" (Task 1, Step 2) rather than left ambiguous, following the same precedent as the foundation plan's zod `.email()` discovery and the account-settings plan's `@vercel/blob` API checks.
-- **Type consistency:** `CardData` (with `labels: LabelData[]`) and `LabelData` are declared identically in `CardItem.tsx`, `Column.tsx`, and `CardDetailPanel.tsx` — same field names and types everywhere. The data assembled in `[boardId]/page.tsx` (`cardsWithLabels`) matches this shape exactly (`id`, `title`, `description`, `dueDate`, `labels`). Every new Server Action returns `Promise<{ error?: string }>`, consistent with all 9 actions from the prior plan — no new return shape introduced.
+- **Type consistency:** `LabelData`, `ColumnData`, and `CardData` (with `labels: LabelData[]`) are declared once in `src/lib/board-types.ts` (Step 0) and imported by `CardItem.tsx`, `Column.tsx`, and `CardDetailPanel.tsx` — no more per-file duplication. The data assembled in `[boardId]/page.tsx` (`cardsWithLabels`) matches this shape exactly (`id`, `title`, `description`, `dueDate`, `labels`). Every new Server Action returns `Promise<{ error?: string }>`, consistent with all 9 actions from the prior plan — no new return shape introduced.
