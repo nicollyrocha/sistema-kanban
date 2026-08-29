@@ -61,7 +61,6 @@ export function CardDetailPanel({
   // out from under whatever field the user is actively editing.
   useEffect(() => {
     closeButtonRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only, see comment above
   }, []);
 
   // Let Escape close the panel — the conventional dismiss key for a dialog.
