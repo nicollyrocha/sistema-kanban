@@ -42,8 +42,14 @@ export function BoardView({
   const [activeCard, setActiveCard] = useState<CardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshotRef = useRef<Record<string, CardData[]> | null>(null);
-  const dragStartRef = useRef<{ columnId: string; index: number } | null>(null);
+  const dragStartRef = useRef<{ columnId: string; index: number; sequence: number } | null>(null);
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Per-card counter, bumped every time a drag starts on that card. Lets a
+  // drag's own handleDragEnd tell, after its `await`, whether a *later* drag
+  // of the same card has already started (and possibly finished) since --
+  // if so, this drag's outcome is stale and must not revert the card out
+  // from under that newer drag.
+  const dragSequenceRef = useRef<Record<string, number>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -68,8 +74,10 @@ export function BoardView({
     const columnId = findColumnId(columns, cardId);
     if (!columnId) return;
     const index = columns[columnId].findIndex((c) => c.id === cardId);
+    const sequence = (dragSequenceRef.current[cardId] ?? 0) + 1;
+    dragSequenceRef.current[cardId] = sequence;
     snapshotRef.current = columns;
-    dragStartRef.current = { columnId, index };
+    dragStartRef.current = { columnId, index, sequence };
     setActiveCard(columns[columnId][index] ?? null);
   }
 
@@ -176,16 +184,25 @@ export function BoardView({
       });
     }
 
+    // If a newer drag of this same card has already started since this one
+    // began (e.g. the user picked it up again before this request settled),
+    // that newer drag owns the card's outcome now -- reverting here would
+    // use this drag's stale `dragStart` and could stomp a move the newer
+    // drag already made (or is about to make).
+    function isStale() {
+      return dragSequenceRef.current[activeId] !== dragStart.sequence;
+    }
+
     try {
       const result = await moveCard(boardId, activeId, targetColumnId, finalIndex);
       if (result.error) {
         showError(result.error);
-        revertToStart();
+        if (!isStale()) revertToStart();
       }
     } catch (err) {
       console.error("Failed to move card:", err);
       showError("Não foi possível mover o card.");
-      revertToStart();
+      if (!isStale()) revertToStart();
     }
   }
 
