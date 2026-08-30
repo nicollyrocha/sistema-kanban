@@ -308,6 +308,7 @@ export function CardDetailPanel({
         </div>
 
         <DeleteButton
+          variant="text"
           label="Excluir card"
           confirmMessage="Tem certeza? Isso vai excluir o card."
           onDelete={async () => {
