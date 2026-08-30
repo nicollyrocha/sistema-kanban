@@ -69,7 +69,11 @@ export function CardItem({
         <div className="flex items-start justify-between gap-2">
           <span>{card.title}</span>
           <span onClick={(e) => e.stopPropagation()}>
-            <DeleteButton label="Excluir card" onDelete={deleteCard.bind(null, boardId, card.id)} />
+            <DeleteButton
+              label="Excluir card"
+              confirmMessage="Tem certeza? Isso vai excluir o card."
+              onDelete={deleteCard.bind(null, boardId, card.id)}
+            />
           </span>
         </div>
         {card.labels.length > 0 && (

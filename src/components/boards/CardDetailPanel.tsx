@@ -40,6 +40,7 @@ export function CardDetailPanel({
   const [labelColor, setLabelColor] = useState<string>(LABEL_COLORS[0]);
   const [labelError, setLabelError] = useState<string | null>(null);
   const [creatingLabel, setCreatingLabel] = useState(false);
+  const [saving, setSaving] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Move focus into the panel once, when it first mounts (it was opened via
@@ -71,16 +72,35 @@ export function CardDetailPanel({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  async function handleDescriptionBlur() {
-    if (description === (card.description ?? "")) return;
+  // Returns whether the description ended up saved (or didn't need saving),
+  // so handleConfirm below can decide whether it's safe to close the panel.
+  async function saveDescription() {
+    if (description === (card.description ?? "")) return true;
     setDescriptionError(null);
     try {
       const result = await updateCardDescription(boardId, card.id, description);
-      if (result.error) setDescriptionError(result.error);
+      if (result.error) {
+        setDescriptionError(result.error);
+        return false;
+      }
+      return true;
     } catch (err) {
       console.error("Failed to save description:", err);
       setDescriptionError("Não foi possível salvar.");
+      return false;
     }
+  }
+
+  // Labels and the due date already save the instant they change (each has
+  // its own immediate action/onChange) -- the description is the only field
+  // that waits for blur, so it's the only one this needs to force through
+  // before closing. Kept as an explicit action (rather than relying only on
+  // blur) since "click somewhere to make it save" isn't an obvious affordance.
+  async function handleConfirm() {
+    setSaving(true);
+    const ok = await saveDescription();
+    setSaving(false);
+    if (ok) onClose();
   }
 
   async function handleDueDateChange(value: string) {
@@ -296,7 +316,7 @@ export function CardDetailPanel({
             aria-label="Descrição do card"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            onBlur={handleDescriptionBlur}
+            onBlur={saveDescription}
             rows={4}
             className="rounded border border-input bg-white/5 px-2 py-1 text-sm outline-none"
           />
@@ -307,16 +327,26 @@ export function CardDetailPanel({
           )}
         </div>
 
-        <DeleteButton
-          variant="text"
-          label="Excluir card"
-          confirmMessage="Tem certeza? Isso vai excluir o card."
-          onDelete={async () => {
-            const result = await deleteCard(boardId, card.id);
-            if (!result.error) onClose();
-            return result;
-          }}
-        />
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={saving}
+            className="w-full rounded-lg bg-gradient-to-r from-[var(--gradient-accent-start)] to-[var(--gradient-accent-end)] px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {saving ? "Salvando..." : "Confirmar alteração"}
+          </button>
+          <DeleteButton
+            variant="text"
+            label="Excluir card"
+            confirmMessage="Tem certeza? Isso vai excluir o card."
+            onDelete={async () => {
+              const result = await deleteCard(boardId, card.id);
+              if (!result.error) onClose();
+              return result;
+            }}
+          />
+        </div>
       </div>
     </div>
   );
