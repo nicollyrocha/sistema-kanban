@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { Brand } from "@/components/Brand";
 
 const FEATURES = [
   {
@@ -49,18 +51,12 @@ export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col">
       <nav className="flex items-center justify-between px-4 py-4 sm:px-8">
-        <span className="text-lg font-semibold">Kanban</span>
+        <Brand />
         <div className="flex gap-2">
-          <Link
-            href="/login"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium"
-          >
+          <Link href="/login" className={buttonVariants({ variant: "outline" })}>
             Entrar
           </Link>
-          <Link
-            href="/signup"
-            className="rounded-lg bg-gradient-to-r from-[var(--gradient-accent-start)] to-[var(--gradient-accent-end)] px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
+          <Link href="/signup" className={buttonVariants({ variant: "default" })}>
             Criar conta
           </Link>
         </div>
@@ -75,16 +71,10 @@ export default function HomePage() {
           Simples, rápido, seu.
         </p>
         <div className="flex gap-3">
-          <Link
-            href="/signup"
-            className="rounded-lg bg-gradient-to-r from-[var(--gradient-accent-start)] to-[var(--gradient-accent-end)] px-5 py-2.5 text-sm font-medium text-primary-foreground"
-          >
+          <Link href="/signup" className={buttonVariants({ variant: "default", size: "lg" })}>
             Criar conta grátis
           </Link>
-          <Link
-            href="/login"
-            className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium"
-          >
+          <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>
             Entrar
           </Link>
         </div>
@@ -134,7 +124,7 @@ export default function HomePage() {
             {FEATURES.map((feature) => (
               <Card
                 key={feature.title}
-                className="flex flex-col items-start gap-2 p-5 text-left"
+                className="flex flex-col items-start gap-2 p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/30"
               >
                 <span
                   aria-hidden="true"
@@ -156,7 +146,7 @@ export default function HomePage() {
         <span>Kanban — feito pra organizar sua rotina.</span>
         <Link
           href="/login"
-          className="underline underline-offset-2 hover:text-foreground"
+          className="underline underline-offset-2 transition-colors hover:text-foreground"
         >
           Entrar
         </Link>
