@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 export function DeleteButton({
   label,
@@ -42,14 +43,24 @@ export function DeleteButton({
         type="button"
         onClick={handleClick}
         disabled={loading}
+        aria-busy={loading || undefined}
         aria-label={variant === "icon" ? label : undefined}
         className={
           variant === "text"
-            ? "w-fit text-sm font-medium text-destructive hover:underline disabled:opacity-50"
-            : "text-muted-foreground hover:text-destructive disabled:opacity-50"
+            ? "inline-flex w-fit items-center gap-1.5 text-sm font-medium text-destructive transition-colors hover:underline disabled:opacity-50"
+            : "inline-flex items-center justify-center text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
         }
       >
-        {variant === "text" ? label : "×"}
+        {variant === "text" ? (
+          <>
+            {loading && <Spinner className="h-3.5 w-3.5" />}
+            {loading ? "Excluindo..." : label}
+          </>
+        ) : loading ? (
+          <Spinner className="h-3.5 w-3.5" />
+        ) : (
+          "×"
+        )}
       </button>
       {error && (
         <p role="alert" className="text-xs text-destructive">

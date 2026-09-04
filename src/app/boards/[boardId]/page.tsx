@@ -72,7 +72,10 @@ export default async function BoardPage({
     <main className="flex min-h-screen flex-col gap-6 px-4 py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/boards"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
             <span aria-hidden="true">←</span> Meus quadros
           </Link>
           <InlineEditableText
@@ -83,6 +86,7 @@ export default async function BoardPage({
           />
         </div>
         <DeleteButton
+          variant="text"
           label="Excluir quadro"
           confirmMessage="Tem certeza? Isso vai excluir todas as colunas e cards deste quadro."
           onDelete={deleteBoard.bind(null, boardId)}

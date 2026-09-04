@@ -64,7 +64,7 @@ export function CardItem({
             setDetailOpen(true);
           }
         }}
-        className="glass flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-2 text-left text-sm"
+        className="glass flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-2 text-left text-sm transition-colors hover:border-ring/40 hover:bg-white/10"
       >
         <div className="flex items-start justify-between gap-2">
           <span>{card.title}</span>

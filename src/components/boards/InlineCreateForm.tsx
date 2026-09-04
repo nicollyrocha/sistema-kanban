@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 export function InlineCreateForm({
   placeholder,
@@ -43,7 +44,7 @@ export function InlineCreateForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-sm text-muted-foreground hover:text-foreground"
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         {buttonLabel}
       </button>
@@ -52,25 +53,32 @@ export function InlineCreateForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-1">
-      <Input
-        autoFocus
-        aria-label={placeholder}
-        placeholder={placeholder}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.preventDefault();
-            setOpen(false);
-            setTitle("");
-            setError(null);
-          }
-        }}
-        onBlur={() => {
-          if (!title.trim()) setOpen(false);
-        }}
-        disabled={loading}
-      />
+      <div className="relative">
+        <Input
+          autoFocus
+          aria-label={placeholder}
+          aria-busy={loading || undefined}
+          placeholder={placeholder}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setOpen(false);
+              setTitle("");
+              setError(null);
+            }
+          }}
+          onBlur={() => {
+            if (!title.trim()) setOpen(false);
+          }}
+          disabled={loading}
+          className={loading ? "pr-9" : undefined}
+        />
+        {loading && (
+          <Spinner className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        )}
+      </div>
       {error && (
         <p role="alert" className="text-xs text-destructive">
           {error}

@@ -42,6 +42,11 @@ export function Column({
           {cards.map((c) => (
             <CardItem key={c.id} boardId={boardId} card={c} boardLabels={boardLabels} />
           ))}
+          {cards.length === 0 && (
+            <p className="rounded-lg border border-dashed border-border px-2 py-4 text-center text-xs text-muted-foreground">
+              Sem cards ainda
+            </p>
+          )}
         </div>
       </SortableContext>
       <InlineCreateForm

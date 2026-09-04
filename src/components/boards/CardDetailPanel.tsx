@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { InlineEditableText } from "./InlineEditableText";
 import { DeleteButton } from "./DeleteButton";
+import { Button } from "@/components/ui/button";
 import { LABEL_COLORS, LABEL_COLOR_NAMES } from "@/lib/label-colors";
 import type { CardData, LabelData } from "@/lib/board-types";
 import {
@@ -177,12 +178,15 @@ export function CardDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        className="absolute inset-0 animate-[overlay-in_150ms_ease-out] bg-black/60"
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={`Detalhes do card ${card.title}`}
-        className="glass relative z-10 flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-card p-4 sm:max-w-md sm:rounded-2xl"
+        className="glass relative z-10 flex max-h-[85vh] w-full animate-[panel-in_180ms_ease-out] flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-card p-4 shadow-2xl shadow-black/40 sm:max-w-md sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-2">
           <InlineEditableText
@@ -196,7 +200,7 @@ export function CardDetailPanel({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             ×
           </button>
@@ -217,6 +221,7 @@ export function CardDetailPanel({
                     type="button"
                     onClick={() => handleUnassignLabel(l.id)}
                     aria-label={`Remover etiqueta ${l.name} deste card`}
+                    className="opacity-70 transition-opacity hover:opacity-100"
                   >
                     ×
                   </button>
@@ -229,16 +234,16 @@ export function CardDetailPanel({
               {availableLabels.map((l) => (
                 <span
                   key={l.id}
-                  className="flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs"
+                  className="flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs transition-colors hover:border-ring/40"
                 >
-                  <button type="button" onClick={() => handleAssignLabel(l.id)}>
+                  <button type="button" onClick={() => handleAssignLabel(l.id)} className="hover:underline">
                     {l.name}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDeleteLabel(l.id)}
                     aria-label={`Excluir etiqueta ${l.name} do quadro`}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground transition-colors hover:text-destructive"
                   >
                     ×
                   </button>
@@ -253,7 +258,7 @@ export function CardDetailPanel({
               value={labelName}
               onChange={(e) => setLabelName(e.target.value)}
               disabled={creatingLabel}
-              className="h-8 flex-1 rounded border border-input bg-white/5 px-2 text-xs outline-none"
+              className="h-8 flex-1 rounded border border-input bg-white/5 px-2 text-xs text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
             />
             <div className="flex gap-1">
               {LABEL_COLORS.map((c) => (
@@ -263,7 +268,7 @@ export function CardDetailPanel({
                   aria-label={`Cor ${LABEL_COLOR_NAMES[c]}`}
                   aria-pressed={labelColor === c}
                   onClick={() => setLabelColor(c)}
-                  className={`h-4 w-4 rounded-full ${
+                  className={`h-4 w-4 rounded-full transition-transform hover:scale-110 ${
                     labelColor === c ? "ring-2 ring-foreground ring-offset-1 ring-offset-card" : ""
                   }`}
                   style={{ backgroundColor: c }}
@@ -273,9 +278,9 @@ export function CardDetailPanel({
             <button
               type="submit"
               disabled={creatingLabel}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
-              Adicionar
+              {creatingLabel ? "Adicionando..." : "Adicionar"}
             </button>
           </form>
           {labelError && (
@@ -292,13 +297,13 @@ export function CardDetailPanel({
             aria-label="Prazo do card"
             value={dueDateValue}
             onChange={(e) => handleDueDateChange(e.target.value)}
-            className="h-8 w-fit rounded border border-input bg-white/5 px-2 text-xs outline-none"
+            className="h-8 w-fit rounded border border-input bg-white/5 px-2 text-xs text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
           {dueDateValue && (
             <button
               type="button"
               onClick={() => handleDueDateChange("")}
-              className="w-fit text-xs text-muted-foreground hover:text-foreground"
+              className="w-fit text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Remover prazo
             </button>
@@ -318,7 +323,7 @@ export function CardDetailPanel({
             onChange={(e) => setDescription(e.target.value)}
             onBlur={saveDescription}
             rows={4}
-            className="rounded border border-input bg-white/5 px-2 py-1 text-sm outline-none"
+            className="rounded border border-input bg-white/5 px-2 py-1 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
           {descriptionError && (
             <p role="alert" className="text-xs text-destructive">
@@ -328,14 +333,9 @@ export function CardDetailPanel({
         </div>
 
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={saving}
-            className="w-full rounded-lg bg-gradient-to-r from-[var(--gradient-accent-start)] to-[var(--gradient-accent-end)] px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
+          <Button type="button" onClick={handleConfirm} loading={saving} className="w-full">
             {saving ? "Salvando..." : "Confirmar alteração"}
-          </button>
+          </Button>
           <DeleteButton
             variant="text"
             label="Excluir card"

@@ -66,7 +66,7 @@ export function InlineEditableText({
             }
           }}
           className={cn(
-            "rounded border border-input bg-white/5 px-2 py-1 text-sm outline-none",
+            "rounded border border-input bg-white/5 px-2 py-1 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
             className
           )}
         />
@@ -83,7 +83,7 @@ export function InlineEditableText({
     <button
       type="button"
       onClick={() => setEditing(true)}
-      className={cn("text-left hover:underline", className)}
+      className={cn("text-left transition-colors hover:underline", className)}
     >
       {value}
     </button>
