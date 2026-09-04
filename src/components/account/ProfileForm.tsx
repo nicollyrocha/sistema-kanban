@@ -117,7 +117,7 @@ export function ProfileForm({
           {message}
         </p>
       )}
-      <Button type="submit" disabled={loading || unchanged}>
+      <Button type="submit" disabled={unchanged} loading={loading}>
         {loading ? "Salvando..." : "Salvar"}
       </Button>
     </form>

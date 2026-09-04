@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { upload } from "@vercel/blob/client";
 import { authClient } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
@@ -62,14 +63,20 @@ export function AvatarUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
+        aria-busy={uploading || undefined}
         aria-label="Trocar foto de perfil"
-        className="relative h-20 w-20 overflow-hidden rounded-full border border-border disabled:opacity-50"
+        className="relative h-20 w-20 overflow-hidden rounded-full border border-border transition-colors hover:border-ring/40 disabled:opacity-50"
       >
         {image ? (
           <Image src={image} alt="" fill sizes="80px" className="object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center bg-accent text-lg font-semibold">
             {initials}
+          </span>
+        )}
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <Spinner className="h-6 w-6" />
           </span>
         )}
       </button>

@@ -18,7 +18,10 @@ export default async function AccountPage() {
       <Card className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Minha conta</h1>
-          <Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/boards"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
             Voltar
           </Link>
         </div>
