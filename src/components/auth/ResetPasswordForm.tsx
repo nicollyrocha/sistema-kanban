@@ -64,7 +64,7 @@ export function ResetPasswordForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" loading={loading}>
         {loading ? "Salvando..." : "Redefinir senha"}
       </Button>
     </form>

@@ -37,20 +37,29 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-4">
+      <div role="status" className="flex flex-col items-center gap-3 text-center">
+        <span
+          aria-hidden="true"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--gradient-accent-start)] to-[var(--gradient-accent-end)] text-lg"
+        >
+          ✓
+        </span>
         <p className="text-sm text-muted-foreground">
           Se existir uma conta com esse email, enviamos um link para
           redefinir a senha.
         </p>
-        <div className="flex justify-between text-sm">
+        <div className="flex w-full justify-between text-sm">
           <button
             type="button"
             onClick={() => setSent(false)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Tentar outro email
           </button>
-          <Link href="/login" className="text-foreground hover:underline">
+          <Link
+            href="/login"
+            className="text-foreground transition-colors hover:underline"
+          >
             Voltar para o login
           </Link>
         </div>
@@ -76,7 +85,7 @@ export function ForgotPasswordForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" loading={loading}>
         {loading ? "Enviando..." : "Enviar link de recuperação"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">

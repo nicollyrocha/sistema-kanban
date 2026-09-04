@@ -64,14 +64,14 @@ export function LoginForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" loading={loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
       <div className="flex justify-between text-sm text-muted-foreground">
-        <Link href="/forgot-password" className="hover:text-foreground">
+        <Link href="/forgot-password" className="transition-colors hover:text-foreground">
           Esqueci minha senha
         </Link>
-        <Link href="/signup" className="hover:text-foreground">
+        <Link href="/signup" className="transition-colors hover:text-foreground">
           Criar conta
         </Link>
       </div>

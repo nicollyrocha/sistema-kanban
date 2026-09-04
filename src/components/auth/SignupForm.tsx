@@ -77,12 +77,12 @@ export function SignupForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" loading={loading}>
         {loading ? "Criando conta..." : "Criar conta"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Já tem conta?{" "}
-        <Link href="/login" className="text-foreground hover:underline">
+        <Link href="/login" className="text-foreground transition-colors hover:underline">
           Entrar
         </Link>
       </p>
