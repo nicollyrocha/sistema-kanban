@@ -318,7 +318,7 @@ export function CardDetailPanel({
                 type="button"
                 aria-pressed={card.estimate === e}
                 onClick={() => handleEstimateChange(e)}
-                className={`h-7 w-7 rounded-full border text-xs transition-colors ${
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition-colors ${
                   card.estimate === e
                     ? "border-ring bg-accent text-foreground"
                     : "border-border text-muted-foreground hover:border-ring/40"
