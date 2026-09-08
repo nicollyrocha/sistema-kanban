@@ -5,12 +5,18 @@ import { InlineEditableText } from "./InlineEditableText";
 import { DeleteButton } from "./DeleteButton";
 import { Button } from "@/components/ui/button";
 import { LABEL_COLORS, LABEL_COLOR_NAMES } from "@/lib/label-colors";
+import { PRIORITIES, PRIORITY_LABELS, PRIORITY_EMOJI } from "@/lib/priority";
+import { CARD_TYPES, CARD_TYPE_LABELS, CARD_TYPE_EMOJI } from "@/lib/card-type";
+import { ESTIMATES } from "@/lib/estimate";
 import type { CardData, LabelData } from "@/lib/board-types";
 import {
   renameCard,
   deleteCard,
   updateCardDescription,
   updateCardDueDate,
+  updateCardPriority,
+  updateCardType,
+  updateCardEstimate,
   createLabel,
   assignLabel,
   unassignLabel,
@@ -41,6 +47,9 @@ export function CardDetailPanel({
   const [labelColor, setLabelColor] = useState<string>(LABEL_COLORS[0]);
   const [labelError, setLabelError] = useState<string | null>(null);
   const [creatingLabel, setCreatingLabel] = useState(false);
+  const [priorityError, setPriorityError] = useState<string | null>(null);
+  const [typeError, setTypeError] = useState<string | null>(null);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -113,6 +122,39 @@ export function CardDetailPanel({
     } catch (err) {
       console.error("Failed to save due date:", err);
       setDueDateError("Não foi possível salvar.");
+    }
+  }
+
+  async function handlePriorityChange(priority: string | null) {
+    setPriorityError(null);
+    try {
+      const result = await updateCardPriority(boardId, card.id, priority);
+      if (result.error) setPriorityError(result.error);
+    } catch (err) {
+      console.error("Failed to update priority:", err);
+      setPriorityError("Não foi possível salvar.");
+    }
+  }
+
+  async function handleTypeChange(type: string) {
+    setTypeError(null);
+    try {
+      const result = await updateCardType(boardId, card.id, type);
+      if (result.error) setTypeError(result.error);
+    } catch (err) {
+      console.error("Failed to update type:", err);
+      setTypeError("Não foi possível salvar.");
+    }
+  }
+
+  async function handleEstimateChange(estimate: number | null) {
+    setEstimateError(null);
+    try {
+      const result = await updateCardEstimate(boardId, card.id, estimate);
+      if (result.error) setEstimateError(result.error);
+    } catch (err) {
+      console.error("Failed to update estimate:", err);
+      setEstimateError("Não foi possível salvar.");
     }
   }
 
@@ -204,6 +246,102 @@ export function CardDetailPanel({
           >
             ×
           </button>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-muted-foreground">Tipo</span>
+          <div className="flex flex-wrap gap-1">
+            {CARD_TYPES.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={card.type === t}
+                onClick={() => handleTypeChange(t)}
+                className={`rounded-full border px-2 py-1 text-xs transition-colors ${
+                  card.type === t
+                    ? "border-ring bg-accent text-foreground"
+                    : "border-border text-muted-foreground hover:border-ring/40"
+                }`}
+              >
+                <span aria-hidden="true">{CARD_TYPE_EMOJI[t]}</span> {CARD_TYPE_LABELS[t]}
+              </button>
+            ))}
+          </div>
+          {typeError && (
+            <p role="alert" className="text-xs text-destructive">
+              {typeError}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-muted-foreground">Prioridade</span>
+          <div className="flex flex-wrap gap-1">
+            {PRIORITIES.map((p) => (
+              <button
+                key={p}
+                type="button"
+                aria-pressed={card.priority === p}
+                onClick={() => handlePriorityChange(p)}
+                className={`rounded-full border px-2 py-1 text-xs transition-colors ${
+                  card.priority === p
+                    ? "border-ring bg-accent text-foreground"
+                    : "border-border text-muted-foreground hover:border-ring/40"
+                }`}
+              >
+                <span aria-hidden="true">{PRIORITY_EMOJI[p]}</span> {PRIORITY_LABELS[p]}
+              </button>
+            ))}
+            {card.priority && (
+              <button
+                type="button"
+                onClick={() => handlePriorityChange(null)}
+                className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-ring/40"
+              >
+                Nenhuma
+              </button>
+            )}
+          </div>
+          {priorityError && (
+            <p role="alert" className="text-xs text-destructive">
+              {priorityError}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-muted-foreground">Estimativa</span>
+          <div className="flex flex-wrap items-center gap-1">
+            {ESTIMATES.map((e) => (
+              <button
+                key={e}
+                type="button"
+                aria-pressed={card.estimate === e}
+                onClick={() => handleEstimateChange(e)}
+                className={`h-7 w-7 rounded-full border text-xs transition-colors ${
+                  card.estimate === e
+                    ? "border-ring bg-accent text-foreground"
+                    : "border-border text-muted-foreground hover:border-ring/40"
+                }`}
+              >
+                {e}
+              </button>
+            ))}
+            {card.estimate !== null && (
+              <button
+                type="button"
+                onClick={() => handleEstimateChange(null)}
+                className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-ring/40"
+              >
+                Nenhuma
+              </button>
+            )}
+          </div>
+          {estimateError && (
+            <p role="alert" className="text-xs text-destructive">
+              {estimateError}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">

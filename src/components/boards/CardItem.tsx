@@ -5,6 +5,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DeleteButton } from "./DeleteButton";
 import { CardDetailPanel } from "./CardDetailPanel";
+import { PRIORITY_EMOJI, PRIORITY_LABELS } from "@/lib/priority";
+import { CARD_TYPE_EMOJI, CARD_TYPE_LABELS } from "@/lib/card-type";
 import type { CardData, LabelData } from "@/lib/board-types";
 import { deleteCard } from "@/app/boards/actions";
 
@@ -75,6 +77,18 @@ export function CardItem({
               onDelete={deleteCard.bind(null, boardId, card.id)}
             />
           </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            <span aria-hidden="true">{CARD_TYPE_EMOJI[card.type]}</span> {CARD_TYPE_LABELS[card.type]}
+          </span>
+          {card.priority && (
+            <span>
+              <span aria-hidden="true">{PRIORITY_EMOJI[card.priority]}</span>{" "}
+              {PRIORITY_LABELS[card.priority]}
+            </span>
+          )}
+          {card.estimate !== null && <span>{card.estimate}</span>}
         </div>
         {card.labels.length > 0 && (
           <div className="flex flex-wrap gap-1">
