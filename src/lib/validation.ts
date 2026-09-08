@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { LABEL_COLORS } from "@/lib/label-colors";
+import { PRIORITIES } from "@/lib/priority";
+import { CARD_TYPES } from "@/lib/card-type";
+import { ESTIMATES } from "@/lib/estimate";
 
 export const signupSchema = z.object({
   name: z.string().min(1, "Informe seu nome"),
@@ -47,6 +50,21 @@ export const labelSchema = z.object({
   color: z.enum(LABEL_COLORS, { error: "Cor inválida" }),
 });
 
+export const cardPrioritySchema = z.object({
+  priority: z.enum(PRIORITIES, { error: "Prioridade inválida" }).nullable(),
+});
+
+export const cardTypeSchema = z.object({
+  type: z.enum(CARD_TYPES, { error: "Tipo inválido" }),
+});
+
+export const cardEstimateSchema = z.object({
+  estimate: z
+    .number()
+    .refine((n) => (ESTIMATES as readonly number[]).includes(n), "Estimativa inválida")
+    .nullable(),
+});
+
 export const moveCardSchema = z.object({
   newIndex: z.number().int("Posição inválida").min(0, "Posição inválida"),
 });
@@ -62,3 +80,6 @@ export type DescriptionInput = z.infer<typeof descriptionSchema>;
 export type DueDateInput = z.infer<typeof dueDateSchema>;
 export type LabelInput = z.infer<typeof labelSchema>;
 export type MoveCardInput = z.infer<typeof moveCardSchema>;
+export type CardPriorityInput = z.infer<typeof cardPrioritySchema>;
+export type CardTypeInput = z.infer<typeof cardTypeSchema>;
+export type CardEstimateInput = z.infer<typeof cardEstimateSchema>;

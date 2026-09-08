@@ -9,6 +9,9 @@ import {
   unique,
   primaryKey,
 } from "drizzle-orm/pg-core";
+import type { PRIORITIES } from "@/lib/priority";
+import type { CARD_TYPES } from "@/lib/card-type";
+import type { ESTIMATES } from "@/lib/estimate";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -117,6 +120,12 @@ export const card = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     dueDate: timestamp("due_date"),
+    priority: text("priority").$type<(typeof PRIORITIES)[number]>(),
+    type: text("type")
+      .$type<(typeof CARD_TYPES)[number]>()
+      .notNull()
+      .default("tarefa"),
+    estimate: integer("estimate").$type<(typeof ESTIMATES)[number]>(),
     position: integer("position").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
