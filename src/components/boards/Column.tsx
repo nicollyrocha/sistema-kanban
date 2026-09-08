@@ -14,11 +14,13 @@ export function Column({
   column,
   cards,
   boardLabels,
+  hasHiddenCards = false,
 }: {
   boardId: string;
   column: ColumnData;
   cards: CardData[];
   boardLabels: LabelData[];
+  hasHiddenCards?: boolean;
 }) {
   const { setNodeRef } = useDroppable({ id: column.id });
 
@@ -44,7 +46,7 @@ export function Column({
           ))}
           {cards.length === 0 && (
             <p className="rounded-lg border border-dashed border-border px-2 py-4 text-center text-xs text-muted-foreground">
-              Sem cards ainda
+              {hasHiddenCards ? "Nenhum card corresponde ao filtro" : "Sem cards ainda"}
             </p>
           )}
         </div>

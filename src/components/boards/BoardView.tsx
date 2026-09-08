@@ -17,7 +17,9 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column } from "./Column";
 import { InlineCreateForm } from "./InlineCreateForm";
+import { FilterBar } from "./FilterBar";
 import type { CardData, ColumnData, LabelData } from "@/lib/board-types";
+import { cardMatchesFilters, type CardFilters } from "@/lib/card-filters";
 import { createColumn, moveCard } from "@/app/boards/actions";
 
 function findColumnId(columns: Record<string, CardData[]>, cardId: string): string | null {
@@ -65,6 +67,32 @@ export function BoardView({
   // if so, this drag's outcome is stale and must not revert the card out
   // from under that newer drag.
   const dragSequenceRef = useRef<Record<string, number>>({});
+
+  const [filters, setFilters] = useState<CardFilters>({
+    priorities: [],
+    types: [],
+    labelIds: [],
+  });
+
+  function toggleFilterValue(list: string[], value: string): string[] {
+    return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+  }
+
+  function togglePriorityFilter(priority: string) {
+    setFilters((prev) => ({ ...prev, priorities: toggleFilterValue(prev.priorities, priority) }));
+  }
+
+  function toggleTypeFilter(type: string) {
+    setFilters((prev) => ({ ...prev, types: toggleFilterValue(prev.types, type) }));
+  }
+
+  function toggleLabelFilter(labelId: string) {
+    setFilters((prev) => ({ ...prev, labelIds: toggleFilterValue(prev.labelIds, labelId) }));
+  }
+
+  function clearFilters() {
+    setFilters({ priorities: [], types: [], labelIds: [] });
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -246,16 +274,29 @@ export function BoardView({
           {error}
         </p>
       )}
+      <FilterBar
+        boardLabels={boardLabels}
+        filters={filters}
+        onTogglePriority={togglePriorityFilter}
+        onToggleType={toggleTypeFilter}
+        onToggleLabel={toggleLabelFilter}
+        onClear={clearFilters}
+      />
       <div className="flex flex-1 gap-4 overflow-x-auto pb-4">
-        {columnOrder.map((column) => (
-          <Column
-            key={column.id}
-            boardId={boardId}
-            column={column}
-            cards={columns[column.id] ?? []}
-            boardLabels={boardLabels}
-          />
-        ))}
+        {columnOrder.map((column) => {
+          const allCards = columns[column.id] ?? [];
+          const visibleCards = allCards.filter((c) => cardMatchesFilters(c, filters));
+          return (
+            <Column
+              key={column.id}
+              boardId={boardId}
+              column={column}
+              cards={visibleCards}
+              boardLabels={boardLabels}
+              hasHiddenCards={visibleCards.length !== allCards.length}
+            />
+          );
+        })}
         <div className="w-64 shrink-0">
           <InlineCreateForm
             placeholder="Nome da coluna"
