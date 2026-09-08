@@ -9,12 +9,16 @@ import { board, boardColumn, card, label, cardLabel } from "@/db/schema";
 import { getOwnedBoard, getOwnedColumn, getOwnedCard, getOwnedLabel } from "@/lib/board-auth";
 import { nextPosition } from "@/lib/position";
 import { reorderColumn } from "@/lib/reorder";
+import { ESTIMATES } from "@/lib/estimate";
 import {
   titleSchema,
   descriptionSchema,
   dueDateSchema,
   labelSchema,
   moveCardSchema,
+  cardPrioritySchema,
+  cardTypeSchema,
+  cardEstimateSchema,
 } from "@/lib/validation";
 
 async function requireUserId() {
@@ -211,6 +215,78 @@ export async function updateCardDueDate(
     .update(card)
     .set({
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function updateCardPriority(
+  boardId: string,
+  cardId: string,
+  priority: string | null
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = cardPrioritySchema.safeParse({ priority });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Prioridade inválida." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .update(card)
+    .set({ priority: parsed.data.priority, updatedAt: new Date() })
+    .where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function updateCardType(
+  boardId: string,
+  cardId: string,
+  type: string
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = cardTypeSchema.safeParse({ type });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Tipo inválido." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .update(card)
+    .set({ type: parsed.data.type, updatedAt: new Date() })
+    .where(eq(card.id, cardId));
+  revalidatePath(`/boards/${boardId}`);
+  return {};
+}
+
+export async function updateCardEstimate(
+  boardId: string,
+  cardId: string,
+  estimate: number | null
+): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  const parsed = cardEstimateSchema.safeParse({ estimate });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Estimativa inválida." };
+  }
+
+  const owned = await getOwnedCard(boardId, cardId, userId);
+  if (!owned) return { error: "Card não encontrado." };
+
+  await db
+    .update(card)
+    .set({
+      // cardEstimateSchema validates membership in ESTIMATES at runtime via
+      // .refine(), but z.number().refine() doesn't narrow the inferred type
+      // past `number` -- cast to match card.estimate's literal-union $type.
+      estimate: parsed.data.estimate as (typeof ESTIMATES)[number] | null,
       updatedAt: new Date(),
     })
     .where(eq(card.id, cardId));
